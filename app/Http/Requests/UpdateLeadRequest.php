@@ -44,4 +44,3 @@ class UpdateLeadRequest extends FormRequest
         ];
     }
 }
-

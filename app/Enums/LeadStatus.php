@@ -22,13 +22,12 @@ enum LeadStatus: string
      */
     public static function options(): array
     {
-        $options = [];
-
-        foreach (self::cases() as $case) {
-            $options[] = ['value' => $case->value, 'label' => $case->label()];
-        }
-
-        return $options;
+        return array_map(
+            fn (self $status) => [
+                'value' => $status->value,
+                'label' => $status->label(),
+            ],
+            self::cases()
+        );
     }
 }
-

@@ -61,4 +61,3 @@ export default function StatusSelect({ lead, statuses, onSuccess }: StatusSelect
         </div>
     );
 }
-

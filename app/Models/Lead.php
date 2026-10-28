@@ -102,6 +102,27 @@ class Lead extends Model
     }
 
     /**
+     * Initials accessor (first letters of up to two words of the name, uppercase).
+     */
+    protected function initials(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $words = preg_split('/\s+/', trim($this->name ?? ''));
+                if (empty($words) || empty($words[0])) {
+                    return '';
+                }
+
+                if (count($words) === 1) {
+                    return Str::upper(mb_substr($words[0], 0, min(2, mb_strlen($words[0]))));
+                }
+
+                return Str::upper(mb_substr($words[0], 0, 1) . mb_substr($words[1], 0, 1));
+            }
+        );
+    }
+
+    /**
      * Handle accessor ('@' . Str::before($email, '@')).
      */
     protected function handle(): Attribute
@@ -111,4 +132,3 @@ class Lead extends Model
         );
     }
 }
-

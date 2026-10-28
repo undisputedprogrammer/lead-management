@@ -12,4 +12,3 @@ export interface PaginatedData<T> {
     data: T[];
     meta: PaginationMeta;
 }
-

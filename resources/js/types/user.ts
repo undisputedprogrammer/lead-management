@@ -4,6 +4,7 @@ export interface UserItem {
     id: number;
     name: string;
     email: string;
+    initials?: string;
     leads_count?: number;
     created_at?: string;
 }
@@ -21,4 +22,3 @@ export interface UserFilterState {
     sort_direction: 'asc' | 'desc';
     page: number;
 }
-

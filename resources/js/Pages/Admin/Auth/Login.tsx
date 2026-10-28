@@ -123,4 +123,3 @@ export default function AdminLogin({ status }: AdminLoginProps) {
         </div>
     );
 }
-

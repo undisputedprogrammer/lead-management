@@ -12,6 +12,7 @@ export interface LeadItem {
     name: string;
     email: string;
     phone: string;
+    initials: string;
     handle: string;
     status: {
         value: LeadStatusValue;
@@ -32,4 +33,3 @@ export interface LeadFilterState {
     sort_direction: 'asc' | 'desc';
     page: number;
 }
-

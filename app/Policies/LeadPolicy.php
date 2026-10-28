@@ -47,4 +47,3 @@ class LeadPolicy
         return (int) $user->id === (int) $lead->user_id;
     }
 }
-

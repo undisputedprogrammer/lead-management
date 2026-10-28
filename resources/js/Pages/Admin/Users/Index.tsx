@@ -6,6 +6,7 @@ import SearchInput from '@/Components/shared/SearchInput';
 import SortToggle from '@/Components/shared/SortToggle';
 import Pagination from '@/Components/shared/Pagination';
 import ConfirmModal from '@/Components/ui/ConfirmModal';
+import Avatar from '@/Components/leads/Avatar';
 import { useListQuery } from '@/hooks/useListQuery';
 import { PaginatedUsers, UserFilterState, UserItem } from '@/types/user';
 
@@ -133,9 +134,15 @@ export default function AdminUsersIndex({
                                         className="hover:bg-gray-50/70 transition-colors border-b border-gray-100 last:border-0"
                                     >
                                         <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <span className="text-sm font-semibold text-gray-900">
-                                                {user.name}
-                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar
+                                                    initials={user.initials || 'U'}
+                                                    size="md"
+                                                />
+                                                <span className="text-sm font-semibold text-gray-900">
+                                                    {user.name}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-600 font-medium">
                                             {user.email}
@@ -206,4 +213,3 @@ export default function AdminUsersIndex({
         </AdminLayout>
     );
 }
-

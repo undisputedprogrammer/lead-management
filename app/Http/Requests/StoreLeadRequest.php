@@ -31,4 +31,3 @@ class StoreLeadRequest extends FormRequest
         ];
     }
 }
-

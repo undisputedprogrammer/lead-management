@@ -125,7 +125,7 @@ Login URL: `http://localhost:8000/admin/login`
 3. **Interactive UI & Placeholders**:
    - Search input with clear button and 400ms debounce.
    - Inline status updates via `PATCH /leads/{lead}/status` with automatic rollback on error.
-   - Clean profile avatars with backend-computed `@handle`.
+   - Modern avatars with backend-computed initials and `@handle`.
    - Delete confirmation modals with loading states.
 
 ---

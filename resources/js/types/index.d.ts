@@ -2,6 +2,7 @@ export interface AuthUser {
     id: number;
     name: string;
     email: string;
+    initials?: string;
     email_verified_at?: string | null;
 }
 

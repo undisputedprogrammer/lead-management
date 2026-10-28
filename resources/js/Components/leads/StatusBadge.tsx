@@ -40,4 +40,3 @@ export default function StatusBadge({ status, label, className = '' }: StatusBad
         </span>
     );
 }
-

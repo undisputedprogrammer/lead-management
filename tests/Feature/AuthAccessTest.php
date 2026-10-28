@@ -44,4 +44,3 @@ class AuthAccessTest extends TestCase
             ->assertRedirect(route('login'));
     }
 }
-

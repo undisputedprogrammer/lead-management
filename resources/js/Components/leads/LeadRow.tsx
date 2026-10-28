@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 import { Edit2, Trash2 } from 'lucide-react';
 import { LeadItem, LeadStatusOption } from '@/types/lead';
+import Avatar from './Avatar';
 import StatusBadge from './StatusBadge';
 import StatusSelect from './StatusSelect';
 
@@ -35,14 +36,12 @@ export default function LeadRow({
                 />
             </td>
 
-            {/* Name + Handle */}
+            {/* Name + Avatar */}
             <td className="px-4 py-3.5 whitespace-nowrap">
-                <div className="flex flex-col">
+                <div className="flex items-center gap-3">
+                    <Avatar initials={lead.initials} size="md" />
                     <span className="text-sm font-semibold text-gray-900 leading-tight">
                         {lead.name}
-                    </span>
-                    <span className="text-xs text-gray-400 mt-0.5 font-normal">
-                        {lead.handle}
                     </span>
                 </div>
             </td>

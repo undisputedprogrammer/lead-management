@@ -84,4 +84,3 @@ class AdminLoginRequest extends FormRequest
         return Str::transliterate('admin|' . Str::lower($this->string('email')) . '|' . $this->ip());
     }
 }
-

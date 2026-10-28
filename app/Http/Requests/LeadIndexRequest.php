@@ -32,4 +32,3 @@ class LeadIndexRequest extends FormRequest
         ];
     }
 }
-
