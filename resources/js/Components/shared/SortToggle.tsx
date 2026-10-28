@@ -24,3 +24,4 @@ export default function SortToggle({ direction, onToggle, className = '' }: Sort
         </button>
     );
 }
+

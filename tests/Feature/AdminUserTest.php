@@ -107,3 +107,4 @@ class AdminUserTest extends TestCase
         $this->assertGuest('web');
     }
 }
+

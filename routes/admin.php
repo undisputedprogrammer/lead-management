@@ -23,3 +23,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 });
+

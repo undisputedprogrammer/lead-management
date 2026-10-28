@@ -10,8 +10,8 @@ import {
     X,
     XCircle,
     LogOut,
+    User,
 } from 'lucide-react';
-import Avatar from '@/Components/leads/Avatar';
 import Dropdown from '@/Components/Dropdown';
 import { PageProps } from '@/types';
 
@@ -94,11 +94,11 @@ export default function AppLayout({
                                         <button
                                             type="button"
                                             className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-blue-400 transition-all focus:outline-none"
+                                            title={auth.user.name}
                                         >
-                                            <Avatar
-                                                initials={auth.user.initials || 'U'}
-                                                size="sm"
-                                            />
+                                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
+                                                <User className="h-4 w-4" />
+                                            </div>
                                         </button>
                                     </Dropdown.Trigger>
 
@@ -173,3 +173,4 @@ export default function AppLayout({
         </div>
     );
 }
+

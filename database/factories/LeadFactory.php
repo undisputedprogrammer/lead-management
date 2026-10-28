@@ -28,3 +28,4 @@ class LeadFactory extends Factory
         ];
     }
 }
+

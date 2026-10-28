@@ -71,3 +71,4 @@ export default function LeadsEdit({ lead, statuses }: LeadsEditProps) {
         </AppLayout>
     );
 }
+

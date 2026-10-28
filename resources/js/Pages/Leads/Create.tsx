@@ -62,3 +62,4 @@ export default function LeadsCreate({ statuses }: LeadsCreateProps) {
         </AppLayout>
     );
 }
+

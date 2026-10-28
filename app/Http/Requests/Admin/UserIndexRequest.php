@@ -30,3 +30,4 @@ class UserIndexRequest extends FormRequest
         ];
     }
 }
+

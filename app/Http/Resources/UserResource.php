@@ -22,9 +22,9 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'initials' => $this->initials,
             'leads_count' => $this->leads_count ?? 0,
             'created_at' => $this->created_at?->format('M d, Y') ?? '',
         ];
     }
 }
+

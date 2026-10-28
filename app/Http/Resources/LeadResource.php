@@ -25,7 +25,6 @@ class LeadResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'initials' => $this->initials,
             'handle' => $this->handle,
             'status' => [
                 'value' => $this->status->value,
@@ -39,3 +38,4 @@ class LeadResource extends JsonResource
         ];
     }
 }
+
