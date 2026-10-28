@@ -21,7 +21,7 @@ A production-grade Lead Management application built with **Laravel 12**, **Iner
 ### Step 1: Clone and install PHP dependencies
 ```bash
 git clone <repository-url>
-cd axel_machine_test_muhammed_ali
+cd lead_management
 composer install
 ```
 
