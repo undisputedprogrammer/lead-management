@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { Edit2, Trash2, Users } from 'lucide-react';
+import { AlertTriangle, Edit2, Trash2, Users } from 'lucide-react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import SearchInput from '@/Components/shared/SearchInput';
 import SortToggle from '@/Components/shared/SortToggle';
 import Pagination from '@/Components/shared/Pagination';
-import ConfirmModal from '@/Components/ui/ConfirmModal';
+import Modal from '@/Components/Modal';
+import Button from '@/Components/ui/Button';
 import Avatar from '@/Components/leads/Avatar';
 import { useListQuery } from '@/hooks/useListQuery';
 import { PaginatedUsers, UserFilterState, UserItem } from '@/types/user';
 
+interface EligibleUser {
+    id: number;
+    name: string;
+    email: string;
+}
+
 interface AdminUsersIndexProps {
     users: PaginatedUsers;
+    eligible_users?: EligibleUser[];
     filters: UserFilterState;
 }
 
 export default function AdminUsersIndex({
     users,
+    eligible_users = [],
     filters: initialFilters,
 }: AdminUsersIndexProps) {
     const {
@@ -32,21 +41,59 @@ export default function AdminUsersIndex({
     });
 
     const [userToDelete, setUserToDelete] = useState<UserItem | null>(null);
+    const [reassignToUserId, setReassignToUserId] = useState<string | number>('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    const eligibleOthers = (eligible_users || []).filter(
+        (u) => userToDelete && u.id !== userToDelete.id
+    );
+
+    const openDeleteModal = (user: UserItem) => {
+        setUserToDelete(user);
+        setDeleteError(null);
+        const others = (eligible_users || []).filter((u) => u.id !== user.id);
+        if (others.length > 0) {
+            setReassignToUserId(others[0].id);
+        } else {
+            setReassignToUserId('');
+        }
+    };
 
     const handleConfirmDelete = () => {
         if (!userToDelete) return;
+
+        const leadsCount = userToDelete.leads_count ?? 0;
+        const others = (eligible_users || []).filter((u) => u.id !== userToDelete.id);
+
+        if (leadsCount > 0 && !reassignToUserId) {
+            setDeleteError('Please select a user to reassign leads to.');
+            return;
+        }
+
+        if (leadsCount > 0 && others.length === 0) {
+            setDeleteError(
+                'Cannot delete: no other active users exist to inherit these leads. Please create another user first.'
+            );
+            return;
+        }
+
         setIsDeleting(true);
+        setDeleteError(null);
 
         router.delete(route('admin.users.destroy', userToDelete.id), {
+            data: leadsCount > 0 ? { reassign_to_user_id: Number(reassignToUserId) } : {},
             preserveScroll: true,
             onSuccess: () => {
                 setIsDeleting(false);
                 setUserToDelete(null);
                 refreshList();
             },
-            onError: () => {
+            onError: (errs) => {
                 setIsDeleting(false);
+                if (errs.reassign_to_user_id) {
+                    setDeleteError(errs.reassign_to_user_id);
+                }
             },
         });
     };
@@ -166,7 +213,7 @@ export default function AdminUsersIndex({
                                                 </Link>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setUserToDelete(user)}
+                                                    onClick={() => openDeleteModal(user)}
                                                     className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                                     title="Delete User"
                                                 >
@@ -199,17 +246,122 @@ export default function AdminUsersIndex({
                 />
             </div>
 
-            {/* Delete Modal */}
-            <ConfirmModal
+            {/* Delete & Reassign Modal */}
+            <Modal
                 show={Boolean(userToDelete)}
-                title="Delete User"
-                message={`Are you sure you want to deactivate and delete user "${userToDelete?.name}"? Soft-deleted users will immediately lose login access, but their associated leads will remain safe.`}
-                confirmText="Delete User"
-                cancelText="Cancel"
-                isLoading={isDeleting}
-                onConfirm={handleConfirmDelete}
-                onClose={() => setUserToDelete(null)}
-            />
+                onClose={() => {
+                    if (!isDeleting) {
+                        setUserToDelete(null);
+                        setDeleteError(null);
+                    }
+                }}
+                maxWidth="md"
+            >
+                <div className="p-6">
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 bg-amber-50 text-amber-600 rounded-full flex-shrink-0">
+                            <AlertTriangle className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-base font-bold text-gray-900">
+                                Deactivate & Delete User
+                            </h3>
+                            <p className="mt-1 text-xs text-gray-500">
+                                You are about to deactivate{' '}
+                                <span className="font-semibold text-gray-800">
+                                    "{userToDelete?.name}"
+                                </span>
+                                . Once deleted, this user will immediately lose access.
+                            </p>
+                        </div>
+                    </div>
+
+                    {userToDelete && (userToDelete.leads_count ?? 0) > 0 ? (
+                        <div className="mt-4 space-y-3">
+                            <div className="p-3 bg-blue-50 border border-blue-200/70 rounded-lg text-xs text-blue-900 leading-relaxed">
+                                <span className="font-semibold">Reassignment Required:</span>{' '}
+                                This user owns{' '}
+                                <span className="font-bold">
+                                    {userToDelete.leads_count} lead(s)
+                                </span>
+                                . To ensure these leads remain editable and active, you must reassign
+                                them to another team member.
+                            </div>
+
+                            {eligibleOthers.length > 0 ? (
+                                <div>
+                                    <label
+                                        htmlFor="reassign_user"
+                                        className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1"
+                                    >
+                                        Reassign Leads To *
+                                    </label>
+                                    <select
+                                        id="reassign_user"
+                                        value={reassignToUserId}
+                                        onChange={(e) => {
+                                            setReassignToUserId(e.target.value);
+                                            setDeleteError(null);
+                                        }}
+                                        className="block w-full text-xs rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                                    >
+                                        {eligibleOthers.map((u) => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.name} ({u.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs">
+                                    Action Blocked: There are no other active users to inherit these leads.
+                                    Please create another user account first.
+                                </div>
+                            )}
+
+                            {deleteError && (
+                                <p className="text-xs text-red-600 font-medium">
+                                    {deleteError}
+                                </p>
+                            )}
+                        </div>
+                    ) : (
+                        <p className="mt-3 text-xs text-gray-500">
+                            This user has no assigned leads.
+                        </p>
+                    )}
+
+                    <div className="mt-6 flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                                setUserToDelete(null);
+                                setDeleteError(null);
+                            }}
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={handleConfirmDelete}
+                            isLoading={isDeleting}
+                            disabled={
+                                (userToDelete?.leads_count ?? 0) > 0 &&
+                                (eligibleOthers.length === 0 || !reassignToUserId)
+                            }
+                        >
+                            {(userToDelete?.leads_count ?? 0) > 0
+                                ? `Reassign & Delete User`
+                                : 'Delete User'}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </AdminLayout>
     );
 }

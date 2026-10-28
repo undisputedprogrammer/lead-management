@@ -106,4 +106,63 @@ class AdminUserTest extends TestCase
         $loginResponse->assertSessionHasErrors('email');
         $this->assertGuest('web');
     }
+
+    public function test_admin_cannot_delete_user_with_leads_without_reassignment(): void
+    {
+        $admin = Admin::factory()->create();
+        $user = User::factory()->create();
+        Lead::factory()->count(2)->create(['user_id' => $user->id]);
+
+        $response = $this->actingAs($admin, 'admin')->delete(route('admin.users.destroy', $user));
+
+        $response->assertSessionHasErrors('reassign_to_user_id');
+        $this->assertNotSoftDeleted('users', ['id' => $user->id]);
+        $this->assertEquals(2, Lead::where('user_id', $user->id)->count());
+    }
+
+    public function test_admin_cannot_reassign_leads_to_self_or_nonexistent_user(): void
+    {
+        $admin = Admin::factory()->create();
+        $user = User::factory()->create();
+        Lead::factory()->count(2)->create(['user_id' => $user->id]);
+
+        // Attempt reassignment to self
+        $responseSelf = $this->actingAs($admin, 'admin')->delete(route('admin.users.destroy', $user), [
+            'reassign_to_user_id' => $user->id,
+        ]);
+        $responseSelf->assertSessionHasErrors('reassign_to_user_id');
+
+        // Attempt reassignment to non-existent ID
+        $responseMissing = $this->actingAs($admin, 'admin')->delete(route('admin.users.destroy', $user), [
+            'reassign_to_user_id' => 99999,
+        ]);
+        $responseMissing->assertSessionHasErrors('reassign_to_user_id');
+    }
+
+    public function test_admin_reassigns_leads_to_another_user_when_deleting(): void
+    {
+        $admin = Admin::factory()->create();
+        $userA = User::factory()->create(['name' => 'Departing User']);
+        $userB = User::factory()->create(['name' => 'Receiving User']);
+
+        $lead1 = Lead::factory()->create(['user_id' => $userA->id, 'name' => 'Lead One']);
+        $lead2 = Lead::factory()->create(['user_id' => $userA->id, 'name' => 'Lead Two']);
+
+        $response = $this->actingAs($admin, 'admin')->delete(route('admin.users.destroy', $userA), [
+            'reassign_to_user_id' => $userB->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // User A soft-deleted
+        $this->assertSoftDeleted('users', ['id' => $userA->id]);
+
+        // Leads ownership transferred to User B
+        $this->assertEquals(2, Lead::where('user_id', $userB->id)->count());
+        $this->assertEquals(0, Lead::where('user_id', $userA->id)->count());
+
+        $this->assertEquals($userB->id, $lead1->fresh()->user_id);
+        $this->assertEquals($userB->id, $lead2->fresh()->user_id);
+    }
 }

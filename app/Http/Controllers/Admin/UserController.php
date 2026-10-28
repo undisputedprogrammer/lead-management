@@ -11,7 +11,10 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -100,9 +103,34 @@ class UserController extends Controller
 
     /**
      * Remove the specified user from storage (soft delete).
+     * If user owns leads, reassigns them to another user of choice.
      */
-    public function destroy(User $user): RedirectResponse
+    public function destroy(Request $request, User $user): RedirectResponse
     {
+        $leadsCount = $user->leads()->count();
+
+        if ($leadsCount > 0) {
+            $request->validate([
+                'reassign_to_user_id' => [
+                    'required',
+                    'integer',
+                    Rule::exists('users', 'id')->whereNull('deleted_at'),
+                    Rule::notIn([$user->id]),
+                ],
+            ], [
+                'reassign_to_user_id.required' => "Please select another user to reassign this user's {$leadsCount} lead(s) to.",
+            ]);
+
+            $newOwnerId = (int) $request->input('reassign_to_user_id');
+
+            DB::transaction(function () use ($user, $newOwnerId) {
+                $user->leads()->update(['user_id' => $newOwnerId]);
+                $user->delete();
+            });
+
+            return back()->with('success', "User deleted successfully. {$leadsCount} lead(s) were reassigned.");
+        }
+
         $user->delete();
 
         return back()->with('success', 'User deleted successfully.');
@@ -142,6 +170,10 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => UserResource::collection($paginator),
+            'eligible_users' => User::query()
+                ->select(['id', 'name', 'email'])
+                ->orderBy('name')
+                ->get(),
             'filters' => [
                 'search' => $search ?? '',
                 'sort_direction' => $dir,
