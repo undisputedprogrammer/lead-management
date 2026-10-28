@@ -162,4 +162,4 @@ Duration: ~9.8s
 
 ## 7. Development Time
 
-- **Total Time Taken**: Approximately 1 hour 45 minutes
+- **Total Time Taken**: Approximately 3 hour 45 minutes
