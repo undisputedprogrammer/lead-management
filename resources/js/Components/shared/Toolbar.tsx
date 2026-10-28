@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Upload } from 'lucide-react';
+import { Download, Trash2, Upload } from 'lucide-react';
 import SearchInput from './SearchInput';
 import FilterDropdown from './FilterDropdown';
 import SortToggle from './SortToggle';
@@ -15,6 +15,9 @@ interface ToolbarProps {
     onSortToggle: () => void;
     showStatusFilter?: boolean;
     searchPlaceholder?: string;
+    selectedCount?: number;
+    onBulkDelete?: () => void;
+    onExport?: () => void;
     className?: string;
 }
 
@@ -28,6 +31,9 @@ export default function Toolbar({
     onSortToggle,
     showStatusFilter = true,
     searchPlaceholder = 'Search name, email...',
+    selectedCount = 0,
+    onBulkDelete,
+    onExport,
     className = '',
 }: ToolbarProps) {
     return (
@@ -57,19 +63,31 @@ export default function Toolbar({
             </div>
 
             <div className="flex items-center gap-2">
+                {selectedCount > 0 && onBulkDelete && (
+                    <button
+                        type="button"
+                        onClick={onBulkDelete}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 focus:outline-none shadow-xs transition-colors"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <span>Delete Selected ({selectedCount})</span>
+                    </button>
+                )}
+
                 <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none shadow-sm transition-colors cursor-not-allowed opacity-80"
-                    title="Import (Stretch item)"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg cursor-not-allowed opacity-60 shadow-xs"
+                    title="Import (Stretch Item)"
                 >
-                    <Upload className="h-4 w-4 text-gray-500" />
+                    <Upload className="h-4 w-4 text-gray-400" />
                     <span>Import</span>
                 </button>
 
                 <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none shadow-sm transition-colors cursor-not-allowed opacity-80"
-                    title="Export (Stretch item)"
+                    onClick={onExport}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none shadow-xs transition-colors cursor-pointer"
+                    title="Export matching leads to CSV"
                 >
                     <Download className="h-4 w-4 text-gray-500" />
                     <span>Export</span>

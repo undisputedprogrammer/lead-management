@@ -9,6 +9,8 @@ import StatusSelect from './StatusSelect';
 interface LeadRowProps {
     lead: LeadItem;
     statuses: LeadStatusOption[];
+    isSelected?: boolean;
+    onToggleSelect?: (id: number) => void;
     onDelete: (lead: LeadItem) => void;
     onStatusUpdated: () => void;
 }
@@ -16,17 +18,21 @@ interface LeadRowProps {
 export default function LeadRow({
     lead,
     statuses,
+    isSelected = false,
+    onToggleSelect,
     onDelete,
     onStatusUpdated,
 }: LeadRowProps) {
     return (
-        <tr className="hover:bg-gray-50/70 transition-colors border-b border-gray-100 last:border-0">
-            {/* Checkbox Placeholder */}
+        <tr className={`hover:bg-gray-50/70 transition-colors border-b border-gray-100 last:border-0 ${isSelected ? 'bg-blue-50/40' : ''}`}>
+            {/* Checkbox */}
             <td className="px-4 py-3.5 whitespace-nowrap w-10">
                 <input
                     type="checkbox"
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                    disabled
+                    checked={isSelected}
+                    onChange={() => onToggleSelect && onToggleSelect(lead.id)}
+                    disabled={!lead.can.delete}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 disabled:opacity-30 disabled:cursor-not-allowed"
                 />
             </td>
 
@@ -71,7 +77,7 @@ export default function LeadRow({
                 )}
             </td>
 
-            {/* Actions (Only visible if can.update or can.delete) */}
+            {/* Actions */}
             <td className="px-4 py-3.5 whitespace-nowrap text-right text-sm">
                 <div className="flex items-center justify-end gap-2">
                     {lead.can.update && (

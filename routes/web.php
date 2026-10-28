@@ -16,6 +16,8 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/leads/search', [LeadController::class, 'searchGet'])->name('leads.search.get');
     Route::get('/leads/create', [LeadController::class, 'create'])->name('leads.create');
     Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+    Route::post('/leads/bulk-delete', [LeadController::class, 'bulkDelete'])->name('leads.bulk-delete');
+    Route::post('/leads/export', [LeadController::class, 'export'])->name('leads.export');
     Route::get('/leads/{lead}/edit', [LeadController::class, 'edit'])->name('leads.edit');
     Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
     Route::patch('/leads/{lead}/status', [LeadController::class, 'status'])->name('leads.status');

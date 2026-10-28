@@ -281,4 +281,38 @@ class LeadTest extends TestCase
         $response->assertForbidden();
         $this->assertNotSoftDeleted('leads', ['id' => $lead->id]);
     }
+
+    public function test_bulk_delete_only_deletes_owned_leads(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $ownedLead1 = Lead::factory()->create(['user_id' => $owner->id]);
+        $ownedLead2 = Lead::factory()->create(['user_id' => $owner->id]);
+        $otherLead = Lead::factory()->create(['user_id' => $otherUser->id]);
+
+        $response = $this->actingAs($owner, 'web')->post(route('leads.bulk-delete'), [
+            'ids' => [$ownedLead1->id, $ownedLead2->id, $otherLead->id],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted('leads', ['id' => $ownedLead1->id]);
+        $this->assertSoftDeleted('leads', ['id' => $ownedLead2->id]);
+        $this->assertNotSoftDeleted('leads', ['id' => $otherLead->id]);
+    }
+
+    public function test_export_streams_csv_with_applied_filters(): void
+    {
+        $user = User::factory()->create();
+        Lead::factory()->create(['user_id' => $user->id, 'name' => 'Target Person', 'email' => 'target@example.com']);
+        Lead::factory()->create(['user_id' => $user->id, 'name' => 'Other Person', 'email' => 'other@example.com']);
+
+        $response = $this->actingAs($user, 'web')->post(route('leads.export'), [
+            'search' => 'Target',
+        ]);
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('attachment; filename=leads-export-', (string) $response->headers->get('content-disposition'));
+    }
 }

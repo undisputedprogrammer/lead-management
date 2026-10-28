@@ -6,6 +6,9 @@ import LeadRow from './LeadRow';
 interface LeadTableProps {
     leads: LeadItem[];
     statuses: LeadStatusOption[];
+    selectedIds?: number[];
+    onToggleSelect?: (id: number) => void;
+    onToggleSelectAll?: () => void;
     isLoading?: boolean;
     onDelete: (lead: LeadItem) => void;
     onStatusUpdated: () => void;
@@ -14,10 +17,18 @@ interface LeadTableProps {
 export default function LeadTable({
     leads,
     statuses,
+    selectedIds = [],
+    onToggleSelect,
+    onToggleSelectAll,
     isLoading = false,
     onDelete,
     onStatusUpdated,
 }: LeadTableProps) {
+    const selectableLeads = leads.filter((l) => l.can.delete);
+    const allSelected =
+        selectableLeads.length > 0 &&
+        selectableLeads.every((l) => selectedIds.includes(l.id));
+
     return (
         <div className="relative overflow-x-auto">
             {isLoading && (
@@ -53,8 +64,11 @@ export default function LeadTable({
                         <th scope="col" className="px-4 py-3 w-10">
                             <input
                                 type="checkbox"
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                                disabled
+                                checked={allSelected}
+                                onChange={onToggleSelectAll}
+                                disabled={selectableLeads.length === 0}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Select all deletable leads on current page"
                             />
                         </th>
                         <th scope="col" className="px-4 py-3">
@@ -81,6 +95,8 @@ export default function LeadTable({
                                 key={lead.id}
                                 lead={lead}
                                 statuses={statuses}
+                                isSelected={selectedIds.includes(lead.id)}
+                                onToggleSelect={onToggleSelect}
                                 onDelete={onDelete}
                                 onStatusUpdated={onStatusUpdated}
                             />

@@ -11,9 +11,11 @@ use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Resources\LeadResource;
 use App\Models\Lead;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LeadController extends Controller
 {
@@ -118,6 +120,72 @@ class LeadController extends Controller
         $lead->delete();
 
         return back()->with('success', 'Lead deleted successfully.');
+    }
+
+    /**
+     * Bulk delete selected leads owned by the user.
+     */
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:leads,id'],
+        ]);
+
+        $user = $request->user('web');
+        $leads = Lead::whereIn('id', $request->input('ids'))->get();
+
+        $deletedCount = 0;
+        foreach ($leads as $lead) {
+            if ($user && $user->can('delete', $lead)) {
+                $lead->delete();
+                $deletedCount++;
+            }
+        }
+
+        return back()->with('success', "{$deletedCount} lead(s) deleted successfully.");
+    }
+
+    /**
+     * Export leads matching current filters as a streaming CSV download.
+     */
+    public function export(LeadIndexRequest $request): StreamedResponse
+    {
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $sortDirection = $request->input('sort_direction', SortDirection::Desc->value);
+
+        $query = Lead::query()
+            ->with('user')
+            ->search($search)
+            ->status($status)
+            ->sortByCreated($sortDirection);
+
+        $fileName = 'leads-export-' . now()->format('Y-m-d-His') . '.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['ID', 'Name', 'Email', 'Phone', 'Status', 'Owner', 'Created At']);
+
+            $query->chunk(200, function ($leads) use ($handle) {
+                foreach ($leads as $lead) {
+                    fputcsv($handle, [
+                        $lead->id,
+                        $lead->name,
+                        $lead->email,
+                        $lead->phone,
+                        $lead->status->label(),
+                        $lead->user?->name ?? 'N/A',
+                        $lead->created_at?->format('Y-m-d H:i:s') ?? '',
+                    ]);
+                }
+            });
+
+            fclose($handle);
+        }, $fileName, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ]);
     }
 
     /**
