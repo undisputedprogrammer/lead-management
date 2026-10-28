@@ -108,37 +108,43 @@ Login URL: `http://localhost:8000/admin/login`
 - **Ownership Security**: Only the creator of the lead (`user_id === lead.user_id`) can update details, change status inline, or delete the lead.
 - Non-owners see no edit/delete action controls and receive HTTP `403 Forbidden` if attempting direct API calls.
 
-### 4. Robust Soft Deletes & Integrity
+### 4. Robust Soft Deletes, Lead Reassignment & Integrity
 - Soft delete is enabled on both `leads` and `users`.
 - Email unique constraints span active and soft-deleted leads to prevent duplicate conflicts and DB exceptions.
-- Soft-deleted users are automatically blocked from authenticating while preserving historical ownership of their leads.
+- Soft-deleted users are automatically blocked from authenticating.
+- **Lead Reassignment on User Deletion**: Because leads require active ownership for editing and lifecycle management, when an admin deletes a user who owns leads, the admin must reassign all leads to another active user. This reassignment and user deletion occur atomically in a database transaction.
 
 ---
 
-## 5. Stretch Items Implemented
+## 5. Stretch Items & Enhancements Implemented
 
-1. **Row Checkboxes & Bulk Delete**:
+1. **Lead Reassignment on User Deletion**:
+   - Dynamic delete modal in Admin dashboard detecting lead ownership.
+   - Mandatory reassignment dropdown with other active users.
+   - Atomic database transaction updating ownership and soft-deleting the user.
+2. **Row Checkboxes & Bulk Delete**:
    - Checkboxes with "Select All" on the current page for owned leads.
    - Bulk deletion via `POST /leads/bulk-delete` with server-side policy verification.
-2. **Real-time CSV Export**:
+3. **Real-time CSV Export**:
    - `POST /leads/export` streams a downloadable CSV of leads filtered by the user's active search, status, and sort criteria.
-3. **Interactive UI & Placeholders**:
+4. **Interactive UI & Polish**:
    - Search input with clear button and 400ms debounce.
    - Inline status updates via `PATCH /leads/{lead}/status` with automatic rollback on error.
-   - Modern avatars with backend-computed initials and `@handle`.
-   - Delete confirmation modals with loading states.
+   - Responsive initials avatars with deterministic color palettes.
+   - Reassignment and delete confirmation modals with loading states.
 
 ---
 
 ## 6. Automated Test Suite
 
-A comprehensive test suite of **47 automated feature tests (234 assertions)** covers all core workflows:
+A comprehensive test suite of **50 automated feature tests (249 assertions)** covers all core workflows:
 - Authentication & guard access control isolation
 - Guest redirection & route protections
 - POST search, status filtering, asc/desc sorting, page clamping
 - Validation rules (regex phone, unique email including soft-deleted rows, status enum)
 - Policy enforcement (owner permissions vs 403 forbidden)
 - Soft delete and deactivation checks
+- Lead reassignment on user deletion (validation, self-reassign protection, ownership transfer)
 - CSV export streaming & bulk delete operations
 
 To run the tests:
@@ -148,8 +154,8 @@ php artisan test
 
 Result:
 ```
-Tests:    47 passed (234 assertions)
-Duration: 8.87s
+Tests:    50 passed (249 assertions)
+Duration: ~9.8s
 ```
 
 ---
